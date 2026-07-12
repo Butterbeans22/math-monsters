@@ -4,23 +4,38 @@ struct GradeSelectorView: View {
     @EnvironmentObject private var router: AppRouter
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+    private let gridSpacing: CGFloat = 10
 
     var body: some View {
         GeometryReader { proxy in
             let isCompact = proxy.size.height < 760
             let isUltraCompact = proxy.size.height < 690
+            let stackSpacing: CGFloat = isUltraCompact ? 8 : 12
+            let horizontalPadding: CGFloat = isUltraCompact ? 10 : 14
+            let topPadding: CGFloat = isUltraCompact ? 4 : 8
+            let bottomPadding: CGFloat = isUltraCompact ? 6 : 10
+            let showInstruction = !isUltraCompact
 
-            VStack(spacing: isUltraCompact ? 8 : 12) {
+            let cardHeight = equalCardHeight(
+                for: proxy,
+                isCompact: isCompact,
+                isUltraCompact: isUltraCompact,
+                stackSpacing: stackSpacing,
+                topPadding: topPadding,
+                bottomPadding: bottomPadding,
+                showInstruction: showInstruction
+            )
+
+            VStack(spacing: stackSpacing) {
                 headerView(isCompact: isCompact, isUltraCompact: isUltraCompact)
-                if !isUltraCompact {
+                if showInstruction {
                     instructionText(isCompact: isCompact)
                 }
-                gradeGrid(cardHeight: cardHeight(for: proxy.size.height), isCompact: isCompact)
-                Spacer(minLength: 0)
+                gradeGrid(cardHeight: cardHeight, isCompact: isCompact)
             }
-            .padding(.horizontal, isUltraCompact ? 10 : 14)
-            .padding(.top, isUltraCompact ? 4 : 8)
-            .padding(.bottom, isUltraCompact ? 6 : 10)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.top, topPadding)
+            .padding(.bottom, bottomPadding)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
@@ -50,7 +65,7 @@ struct GradeSelectorView: View {
     // MARK: - Grade Grid
 
     private func gradeGrid(cardHeight: CGFloat, isCompact: Bool) -> some View {
-        LazyVGrid(columns: columns, spacing: 10) {
+        LazyVGrid(columns: columns, spacing: gridSpacing) {
             ForEach(GradeLevel.allCases) { grade in
                 gradeCard(grade, cardHeight: cardHeight, isCompact: isCompact)
             }
@@ -94,10 +109,34 @@ struct GradeSelectorView: View {
         .buttonStyle(.plain)
     }
 
-    private func cardHeight(for availableHeight: CGFloat) -> CGFloat {
-        if availableHeight < 690 { return 92 }
-        if availableHeight < 700 { return 106 }
-        if availableHeight < 780 { return 114 }
-        return 124
+    private func equalCardHeight(
+        for proxy: GeometryProxy,
+        isCompact: Bool,
+        isUltraCompact: Bool,
+        stackSpacing: CGFloat,
+        topPadding: CGFloat,
+        bottomPadding: CGFloat,
+        showInstruction: Bool
+    ) -> CGFloat {
+        let rows = Int(ceil(Double(GradeLevel.allCases.count) / 2.0))
+        let safeAdjustedHeight = proxy.size.height - proxy.safeAreaInsets.top - proxy.safeAreaInsets.bottom
+
+        // Conservative fixed-height estimates so cards always fit without clipping.
+        let headerHeight: CGFloat = isUltraCompact ? 46 : (isCompact ? 52 : 58)
+        let instructionHeight: CGFloat = showInstruction ? (isCompact ? 12 : 14) : 0
+
+        let stackGapCount: CGFloat = showInstruction ? 2 : 1
+        let rowGaps = CGFloat(max(rows - 1, 0))
+
+        let remaining = safeAdjustedHeight
+            - topPadding
+            - bottomPadding
+            - headerHeight
+            - instructionHeight
+            - (stackGapCount * stackSpacing)
+            - (rowGaps * gridSpacing)
+
+        let calculated = floor(remaining / CGFloat(rows))
+        return max(84, calculated)
     }
 }
