@@ -73,10 +73,28 @@ struct PracticeView: View {
     }
 
     private var progressBar: some View {
-        Text("Problem \(min(viewModel.completedProblems + 1, problemCount)) of \(problemCount)")
-            .font(.caption.bold())
-            .foregroundStyle(.secondary)
-            .padding(.top, 8)
+        VStack(spacing: 6) {
+            HStack {
+                Text("Problem \(min(viewModel.completedProblems + 1, problemCount)) of \(problemCount)")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text("\(Int(progressValue * 100))%")
+                    .font(.caption2.bold())
+                    .foregroundStyle(.secondary)
+            }
+
+            ProgressView(value: progressValue)
+                .progressViewStyle(.linear)
+                .tint(operation.color)
+                .frame(maxWidth: .infinity)
+        }
+        .padding(.top, 8)
+    }
+
+    private var progressValue: Double {
+        guard problemCount > 0 else { return 0 }
+        return min(1, Double(viewModel.completedProblems) / Double(problemCount))
     }
 
     private func scorePill(count: Int, label: String, color: Color, icon: String) -> some View {
