@@ -19,6 +19,9 @@ targets:
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1,2"
         INFOPLIST_FILE: MathMonsters/Info.plist
+        CODE_SIGNING_ALLOWED: NO
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_IDENTITY: ""
     info:
       path: MathMonsters/Info.plist
       properties:
