@@ -7,56 +7,60 @@ struct OperationSelectorView: View {
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 28) {
+        GeometryReader { _ in
+            VStack(spacing: 12) {
                 gradeHeader
                 instructionText
                 operationGrid
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 24)
+            .padding(.horizontal, 14)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .navigationTitle(grade.displayName)
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     // MARK: - Grade Header
 
     private var gradeHeader: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 10) {
             ZStack {
                 Circle()
                     .fill(grade.color.gradient)
-                    .frame(width: 64, height: 64)
+                    .frame(width: 46, height: 46)
                 Text(grade.emoji)
-                    .font(.system(size: 32))
+                    .font(.system(size: 22))
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(grade.displayName)
-                    .font(.title.bold())
+                    .font(.headline.bold())
                 Text(grade.skillDescription)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
-                    .lineSpacing(2)
+                    .lineSpacing(1)
+                    .lineLimit(2)
             }
             Spacer()
         }
-        .padding(16)
+        .padding(10)
         .background(Color(.systemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private var instructionText: some View {
         Text("Choose an operation to practice")
-            .font(.subheadline)
+            .font(.caption)
             .foregroundStyle(.secondary)
     }
 
     // MARK: - Operation Grid
 
     private var operationGrid: some View {
-        LazyVGrid(columns: columns, spacing: 16) {
+        LazyVGrid(columns: columns, spacing: 10) {
             ForEach(grade.availableOperations) { operation in
                 operationCard(operation)
             }
@@ -67,25 +71,25 @@ struct OperationSelectorView: View {
         Button {
             router.navigate(to: .practice(grade, operation))
         } label: {
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 Text(operation.emoji)
-                    .font(.system(size: 44))
+                    .font(.system(size: 28))
 
                 Text(operation.symbol)
-                    .font(.system(size: 36, weight: .black, design: .rounded))
+                    .font(.system(size: 24, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text(operation.rawValue)
-                    .font(.headline)
+                    .font(.subheadline.bold())
                     .foregroundStyle(.white)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 24)
+            .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: 14)
                     .fill(operation.color.gradient)
             )
-            .shadow(color: operation.color.opacity(0.35), radius: 6, x: 0, y: 4)
+            .shadow(color: operation.color.opacity(0.2), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(.plain)
     }
