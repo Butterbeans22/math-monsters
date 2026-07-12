@@ -7,16 +7,21 @@ struct OperationSelectorView: View {
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
 
     var body: some View {
-        GeometryReader { _ in
-            VStack(spacing: 12) {
-                gradeHeader
-                instructionText
-                operationGrid
+        GeometryReader { proxy in
+            let isCompact = proxy.size.height < 760
+            let isUltraCompact = proxy.size.height < 690
+
+            VStack(spacing: isUltraCompact ? 8 : 12) {
+                gradeHeader(isCompact: isCompact)
+                if !isUltraCompact {
+                    instructionText(isCompact: isCompact)
+                }
+                operationGrid(isCompact: isCompact)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 14)
-            .padding(.top, 8)
-            .padding(.bottom, 10)
+            .padding(.horizontal, isUltraCompact ? 10 : 14)
+            .padding(.top, isUltraCompact ? 4 : 8)
+            .padding(.bottom, isUltraCompact ? 6 : 10)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
@@ -26,18 +31,18 @@ struct OperationSelectorView: View {
 
     // MARK: - Grade Header
 
-    private var gradeHeader: some View {
+    private func gradeHeader(isCompact: Bool) -> some View {
         HStack(spacing: 10) {
             ZStack {
                 Circle()
                     .fill(grade.color.gradient)
-                    .frame(width: 46, height: 46)
+                    .frame(width: isCompact ? 38 : 46, height: isCompact ? 38 : 46)
                 Text(grade.emoji)
-                    .font(.system(size: 22))
+                    .font(.system(size: isCompact ? 18 : 22))
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text(grade.displayName)
-                    .font(.headline.bold())
+                    .font((isCompact ? Font.subheadline : Font.headline).bold())
                 Text(grade.skillDescription)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -46,45 +51,45 @@ struct OperationSelectorView: View {
             }
             Spacer()
         }
-        .padding(10)
+        .padding(isCompact ? 8 : 10)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    private var instructionText: some View {
+    private func instructionText(isCompact: Bool) -> some View {
         Text("Choose an operation to practice")
-            .font(.caption)
+            .font(isCompact ? .caption2 : .caption)
             .foregroundStyle(.secondary)
     }
 
     // MARK: - Operation Grid
 
-    private var operationGrid: some View {
+    private func operationGrid(isCompact: Bool) -> some View {
         LazyVGrid(columns: columns, spacing: 10) {
             ForEach(grade.availableOperations) { operation in
-                operationCard(operation)
+                operationCard(operation, isCompact: isCompact)
             }
         }
     }
 
-    private func operationCard(_ operation: MathOperation) -> some View {
+    private func operationCard(_ operation: MathOperation, isCompact: Bool) -> some View {
         Button {
             router.navigate(to: .practice(grade, operation))
         } label: {
             VStack(spacing: 8) {
                 Text(operation.emoji)
-                    .font(.system(size: 28))
+                    .font(.system(size: isCompact ? 24 : 28))
 
                 Text(operation.symbol)
-                    .font(.system(size: 24, weight: .black, design: .rounded))
+                    .font(.system(size: isCompact ? 20 : 24, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
 
                 Text(operation.rawValue)
-                    .font(.subheadline.bold())
+                    .font((isCompact ? Font.caption : Font.subheadline).bold())
                     .foregroundStyle(.white)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
+            .padding(.vertical, isCompact ? 10 : 14)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(operation.color.gradient)

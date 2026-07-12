@@ -7,15 +7,20 @@ struct GradeSelectorView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            VStack(spacing: 14) {
-                headerView
-                instructionText
-                gradeGrid(cardHeight: cardHeight(for: proxy.size.height))
+            let isCompact = proxy.size.height < 760
+            let isUltraCompact = proxy.size.height < 690
+
+            VStack(spacing: isUltraCompact ? 8 : 12) {
+                headerView(isCompact: isCompact, isUltraCompact: isUltraCompact)
+                if !isUltraCompact {
+                    instructionText(isCompact: isCompact)
+                }
+                gradeGrid(cardHeight: cardHeight(for: proxy.size.height), isCompact: isCompact)
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 14)
-            .padding(.top, 8)
-            .padding(.bottom, 10)
+            .padding(.horizontal, isUltraCompact ? 10 : 14)
+            .padding(.top, isUltraCompact ? 4 : 8)
+            .padding(.bottom, isUltraCompact ? 6 : 10)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
@@ -26,48 +31,48 @@ struct GradeSelectorView: View {
 
     // MARK: - Header
 
-    private var headerView: some View {
-        VStack(spacing: 4) {
+    private func headerView(isCompact: Bool, isUltraCompact: Bool) -> some View {
+        VStack(spacing: isUltraCompact ? 2 : 4) {
             Text("🧮 👾 🧮")
-                .font(.system(size: 34))
+                .font(.system(size: isUltraCompact ? 28 : (isCompact ? 30 : 34)))
             Text("Let's Practice Math!")
-                .font(.headline.bold())
+                .font((isCompact ? Font.subheadline : Font.headline).bold())
                 .foregroundStyle(.primary)
         }
     }
 
-    private var instructionText: some View {
+    private func instructionText(isCompact: Bool) -> some View {
         Text("Choose your grade level to get started")
-            .font(.caption)
+            .font(isCompact ? .caption2 : .caption)
             .foregroundStyle(.secondary)
     }
 
     // MARK: - Grade Grid
 
-    private func gradeGrid(cardHeight: CGFloat) -> some View {
+    private func gradeGrid(cardHeight: CGFloat, isCompact: Bool) -> some View {
         LazyVGrid(columns: columns, spacing: 10) {
             ForEach(GradeLevel.allCases) { grade in
-                gradeCard(grade, cardHeight: cardHeight)
+                gradeCard(grade, cardHeight: cardHeight, isCompact: isCompact)
             }
         }
     }
 
-    private func gradeCard(_ grade: GradeLevel, cardHeight: CGFloat) -> some View {
+    private func gradeCard(_ grade: GradeLevel, cardHeight: CGFloat, isCompact: Bool) -> some View {
         Button {
             router.navigate(to: .operationSelector(grade))
         } label: {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text(grade.emoji)
-                        .font(.system(size: 26))
+                        .font(.system(size: isCompact ? 22 : 26))
                     Spacer()
                     Image(systemName: "chevron.right.circle.fill")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: isCompact ? 14 : 16, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.7))
                 }
 
                 Text(grade.displayName)
-                    .font(.headline.bold())
+                    .font((isCompact ? Font.subheadline : Font.headline).bold())
                     .foregroundStyle(.white)
 
                 Text(grade.skillDescription)
@@ -77,7 +82,7 @@ struct GradeSelectorView: View {
                     .lineSpacing(1)
                     .lineLimit(2)
             }
-            .padding(12)
+            .padding(isCompact ? 9 : 12)
             .frame(minHeight: cardHeight, maxHeight: cardHeight)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
@@ -90,6 +95,7 @@ struct GradeSelectorView: View {
     }
 
     private func cardHeight(for availableHeight: CGFloat) -> CGFloat {
+        if availableHeight < 690 { return 92 }
         if availableHeight < 700 { return 106 }
         if availableHeight < 780 { return 114 }
         return 124
