@@ -185,14 +185,16 @@ struct MathProblem {
 final class GameViewModel: ObservableObject {
     let grade: GradeLevel
     let operation: MathOperation
+    private let maxRetriesPerProblem = 1
 
     @Published var currentProblem: MathProblem
     @Published var answerText: String = ""
     @Published var correctCount: Int = 0
     @Published var incorrectCount: Int = 0
+    @Published var retriesRemaining: Int = 1
     @Published var answerState: AnswerState = .unanswered
 
-    enum AnswerState { case unanswered, correct, incorrect }
+    enum AnswerState { case unanswered, retry, correct, incorrect }
 
     init(grade: GradeLevel, operation: MathOperation) {
         self.grade     = grade
@@ -205,6 +207,10 @@ final class GameViewModel: ObservableObject {
         if userAnswer == currentProblem.correctAnswer {
             correctCount += 1
             answerState  = .correct
+        } else if retriesRemaining > 0 {
+            retriesRemaining -= 1
+            answerState = .retry
+            answerText = ""
         } else {
             incorrectCount += 1
             answerState    = .incorrect
@@ -214,6 +220,7 @@ final class GameViewModel: ObservableObject {
     func nextProblem() {
         currentProblem = MathProblem.generate(grade: grade, operation: operation)
         answerText     = ""
+        retriesRemaining = maxRetriesPerProblem
         answerState    = .unanswered
     }
 }

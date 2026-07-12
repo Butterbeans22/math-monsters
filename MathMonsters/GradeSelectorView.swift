@@ -70,7 +70,11 @@ struct GradeSelectorView: View {
                 Text(grade.emoji)
                     .font(.system(size: isCompact ? 18 : 20))
 
-                Text("G\(grade.rawValue)")
+                Text("Grade")
+                    .font(.system(size: isCompact ? 8 : 9, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+
+                Text("\(grade.rawValue)")
                     .font(.system(size: isCompact ? 10 : 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
             }

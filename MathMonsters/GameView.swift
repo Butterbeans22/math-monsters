@@ -10,6 +10,10 @@ struct PracticeView: View {
     @EnvironmentObject private var router: AppRouter
     @FocusState private var answerFocused: Bool
 
+    private var isProblemFinished: Bool {
+        viewModel.answerState == .correct || viewModel.answerState == .incorrect
+    }
+
     init(grade: GradeLevel, operation: MathOperation) {
         self.grade     = grade
         self.operation = operation
@@ -110,15 +114,15 @@ struct PracticeView: View {
                     RoundedRectangle(cornerRadius: 14)
                         .stroke(answerBorderColor, lineWidth: 2)
                 )
-                .disabled(viewModel.answerState != .unanswered)
+                .disabled(isProblemFinished)
                 .frame(maxWidth: .infinity)
 
-            if viewModel.answerState == .unanswered {
+            if !isProblemFinished {
                 Button {
                     answerFocused = false
                     viewModel.checkAnswer()
                 } label: {
-                    Text("Check")
+                    Text(viewModel.answerState == .retry ? "Retry" : "Check")
                         .font(.headline)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 20)
@@ -151,6 +155,7 @@ struct PracticeView: View {
     private var answerBorderColor: Color {
         switch viewModel.answerState {
         case .unanswered: return Color.secondary.opacity(0.3)
+        case .retry:      return .orange
         case .correct:    return .green
         case .incorrect:  return .red
         }
@@ -163,6 +168,12 @@ struct PracticeView: View {
         switch viewModel.answerState {
         case .unanswered:
             Color.clear.frame(height: 72)
+        case .retry:
+            feedbackBanner(
+                emoji: "🔁",
+                text: "Try one more time!",
+                color: .orange
+            )
         case .correct:
             feedbackBanner(emoji: "🎉", text: "Correct!", color: .green)
         case .incorrect:
