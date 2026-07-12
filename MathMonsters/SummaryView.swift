@@ -3,7 +3,7 @@ import SwiftUI
 struct SummaryView: View {
     let correctCount: Int
     let incorrectCount: Int
-    let onPlayAgain: () -> Void
+    @EnvironmentObject private var router: AppRouter
 
     private var totalQuestions: Int { correctCount + incorrectCount }
 
@@ -51,7 +51,7 @@ struct SummaryView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
 
             Button {
-                onPlayAgain()
+                router.popToRoot()
             } label: {
                 Label("Play Again", systemImage: "arrow.counterclockwise.circle.fill")
                     .font(.headline)

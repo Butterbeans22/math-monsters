@@ -1,252 +1,212 @@
 import SwiftUI
 
-struct GameView: View {
-    @ObservedObject var viewModel: GameViewModel
-    @Binding var showSummary: Bool
+// NOTE: File kept as GameView.swift; struct renamed PracticeView for semantic clarity.
+
+struct PracticeView: View {
+    let grade: GradeLevel
+    let operation: MathOperation
+
+    @StateObject private var viewModel: GameViewModel
+    @EnvironmentObject private var router: AppRouter
     @FocusState private var answerFocused: Bool
 
+    init(grade: GradeLevel, operation: MathOperation) {
+        self.grade     = grade
+        self.operation = operation
+        _viewModel     = StateObject(wrappedValue: GameViewModel(grade: grade, operation: operation))
+    }
+
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                headerView
-                gradeSelectionView
-                operationSelectionView
-                problemView
-                answerInputView
-                feedbackView
-                scoreView
-                bottomButtons
+        ZStack {
+            Color(.systemGroupedBackground).ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                scoreBar
+                Spacer()
+                problemSection
+                Spacer()
+                answerSection
+                feedbackSection
+                Spacer()
+                endSessionButton
+                    .padding(.bottom, 32)
             }
-            .padding()
+            .padding(.horizontal, 24)
         }
-        .navigationTitle("Math Monsters")
-        .navigationBarTitleDisplayMode(.large)
-        .background(Color(.systemGroupedBackground))
-    }
-
-    // MARK: - Header
-
-    private var headerView: some View {
-        HStack {
-            Text("🧮")
-                .font(.system(size: 48))
-            Text("👾")
-                .font(.system(size: 48))
-            Text("🧮")
-                .font(.system(size: 48))
-        }
-    }
-
-    // MARK: - Grade Selection (mirrors uiGradeGroupBox)
-
-    private var gradeSelectionView: some View {
-        GroupBox("Grade Level") {
-            HStack(spacing: 12) {
-                ForEach(GradeLevel.allCases) { grade in
-                    gradeButton(grade)
+        .navigationTitle("\(grade.displayName) · \(operation.rawValue)")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                HStack(spacing: 6) {
+                    Text(grade.emoji)
+                    Text("\(grade.displayName)  ·  \(operation.symbol)")
+                        .font(.headline)
                 }
             }
-            .frame(maxWidth: .infinity)
         }
+        .onTapGesture { answerFocused = false }
     }
 
-    private func gradeButton(_ grade: GradeLevel) -> some View {
-        Button {
-            viewModel.selectedGrade = grade
-            viewModel.gradeChanged()
-        } label: {
-            Text(grade.displayName)
+    // MARK: - Score Bar
+
+    private var scoreBar: some View {
+        HStack(spacing: 20) {
+            scorePill(count: viewModel.correctCount,   label: "Correct",   color: .green,  icon: "checkmark.circle.fill")
+            Spacer()
+            scorePill(count: viewModel.incorrectCount, label: "Incorrect", color: .red,    icon: "xmark.circle.fill")
+        }
+        .padding(.top, 16)
+    }
+
+    private func scorePill(count: Int, label: String, color: Color, icon: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .foregroundStyle(color)
+            Text("\(count)  \(label)")
                 .font(.subheadline.bold())
-                .foregroundStyle(viewModel.selectedGrade == grade ? .white : .primary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(viewModel.selectedGrade == grade ? Color.indigo : Color(.systemBackground))
-                )
+                .foregroundStyle(color)
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(color.opacity(0.12))
+        .clipShape(Capsule())
     }
 
-    // MARK: - Operation Selection (mirrors uiOperationGroupBox)
+    // MARK: - Problem Display
 
-    private var operationSelectionView: some View {
-        GroupBox("Operation") {
-            HStack(spacing: 20) {
-                ForEach(MathOperation.allCases) { op in
-                    operationButton(op)
-                }
-            }
-            .frame(maxWidth: .infinity)
-        }
-    }
-
-    private func operationButton(_ op: MathOperation) -> some View {
-        Button {
-            viewModel.selectedOperation = op
-            viewModel.generateProblem()
-        } label: {
-            HStack(spacing: 6) {
-                Text(op.symbol)
-                    .font(.title2.bold())
-                Text(op.rawValue)
-                    .font(.subheadline.bold())
-            }
-            .foregroundStyle(viewModel.selectedOperation == op ? .white : .primary)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(viewModel.selectedOperation == op ? Color.orange : Color(.systemBackground))
-            )
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Problem Display (mirrors uiProblemGroupBox with +/= picture boxes)
-
-    private var problemView: some View {
-        GroupBox("Problem") {
-            Text(viewModel.currentProblem.displayString)
-                .font(.system(size: 48, weight: .bold, design: .rounded))
-                .minimumScaleFactor(0.5)
+    private var problemSection: some View {
+        VStack(spacing: 16) {
+            Text(viewModel.currentProblem.problemText)
+                .font(.system(size: 60, weight: .black, design: .rounded))
+                .minimumScaleFactor(0.4)
+                .lineLimit(1)
                 .foregroundStyle(.primary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+
+            Text("= ?")
+                .font(.system(size: 44, weight: .bold, design: .rounded))
+                .foregroundStyle(operation.color)
         }
+        .multilineTextAlignment(.center)
+        .padding(28)
+        .frame(maxWidth: .infinity)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .shadow(color: .black.opacity(0.06), radius: 10, x: 0, y: 4)
     }
 
-    // MARK: - Answer Input (mirrors uiAnswerTextBox + uiCheckAnswerButton)
+    // MARK: - Answer Input
 
-    private var answerInputView: some View {
-        GroupBox("Your Answer") {
-            HStack(spacing: 12) {
-                TextField("?", text: $viewModel.answerText)
-                    .font(.system(size: 36, weight: .bold, design: .rounded))
-                    .multilineTextAlignment(.center)
-                    .keyboardType(.numberPad)
-                    .focused($answerFocused)
-                    .frame(width: 120, height: 60)
-                    .background(Color(.systemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.secondary, lineWidth: 1))
-                    .disabled(viewModel.answerState != .unanswered)
+    private var answerSection: some View {
+        HStack(spacing: 12) {
+            TextField("Your answer", text: $viewModel.answerText)
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .multilineTextAlignment(.center)
+                .keyboardType(.numberPad)
+                .focused($answerFocused)
+                .padding()
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(answerBorderColor, lineWidth: 2)
+                )
+                .disabled(viewModel.answerState != .unanswered)
+                .frame(maxWidth: .infinity)
 
+            if viewModel.answerState == .unanswered {
                 Button {
                     answerFocused = false
                     viewModel.checkAnswer()
                 } label: {
-                    Text("Check!")
+                    Text("Check")
                         .font(.headline)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 20)
-                        .padding(.vertical, 14)
+                        .padding(.vertical, 18)
                         .background(
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(viewModel.answerText.isEmpty || viewModel.answerState != .unanswered
-                                      ? Color.gray : Color.green)
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(viewModel.answerText.isEmpty ? Color.gray : operation.color)
                         )
                 }
-                .disabled(viewModel.answerText.isEmpty || viewModel.answerState != .unanswered)
+                .disabled(viewModel.answerText.isEmpty)
+            } else {
+                Button {
+                    viewModel.nextProblem()
+                    answerFocused = true
+                } label: {
+                    Label("Next", systemImage: "arrow.right")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 18)
+                        .background(RoundedRectangle(cornerRadius: 14).fill(operation.color))
+                }
+                .transition(.move(edge: .trailing).combined(with: .opacity))
             }
-            .frame(maxWidth: .infinity)
+        }
+        .animation(.spring(duration: 0.25), value: viewModel.answerState)
+        .padding(.top, 24)
+    }
+
+    private var answerBorderColor: Color {
+        switch viewModel.answerState {
+        case .unanswered: return Color.secondary.opacity(0.3)
+        case .correct:    return .green
+        case .incorrect:  return .red
         }
     }
 
-    // MARK: - Feedback (mirrors uiAnswerPictureBox / uiHappyPictureBox / uiNeutralPictureBox)
+    // MARK: - Feedback
 
     @ViewBuilder
-    private var feedbackView: some View {
+    private var feedbackSection: some View {
         switch viewModel.answerState {
         case .unanswered:
-            EmptyView()
+            Color.clear.frame(height: 72)
         case .correct:
-            feedbackCard(
-                emoji: "🎉",
-                message: "Correct!",
-                color: .green
-            )
+            feedbackBanner(emoji: "🎉", text: "Correct!", color: .green)
         case .incorrect:
-            feedbackCard(
+            feedbackBanner(
                 emoji: "😬",
-                message: "Not quite! The answer is \(viewModel.currentProblem.correctAnswer)",
+                text: "Not quite — the answer is \(viewModel.currentProblem.correctAnswer)",
                 color: .red
             )
         }
     }
 
-    private func feedbackCard(emoji: String, message: String, color: Color) -> some View {
-        HStack(spacing: 12) {
-            Text(emoji)
-                .font(.system(size: 40))
-            Text(message)
-                .font(.title3.bold())
+    private func feedbackBanner(emoji: String, text: String, color: Color) -> some View {
+        HStack(spacing: 10) {
+            Text(emoji).font(.system(size: 32))
+            Text(text)
+                .font(.subheadline.bold())
                 .foregroundStyle(color)
         }
-        .padding()
+        .frame(height: 72)
+        .padding(.horizontal, 16)
         .frame(maxWidth: .infinity)
-        .background(color.opacity(0.12))
+        .background(color.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .transition(.scale.combined(with: .opacity))
+        .transition(.scale(scale: 0.9).combined(with: .opacity))
         .animation(.spring(duration: 0.3), value: viewModel.answerState)
     }
 
-    // MARK: - Score (mirrors uiCorrectLabel / uiIncorrectLabel)
+    // MARK: - End Session
 
-    private var scoreView: some View {
-        GroupBox("Score") {
-            HStack(spacing: 32) {
-                VStack {
-                    Text("\(viewModel.correctCount)")
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
-                        .foregroundStyle(.green)
-                    Text("Correct")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Divider().frame(height: 50)
-                VStack {
-                    Text("\(viewModel.incorrectCount)")
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
-                        .foregroundStyle(.red)
-                    Text("Incorrect")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity)
+    private var endSessionButton: some View {
+        Button {
+            router.navigate(to: .summary(
+                correct:   viewModel.correctCount,
+                incorrect: viewModel.incorrectCount
+            ))
+        } label: {
+            Label("End Session", systemImage: "flag.checkered")
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity)
+                .background(Color(.systemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
         }
-    }
-
-    // MARK: - Bottom Buttons (mirrors uiExitButton / next problem)
-
-    private var bottomButtons: some View {
-        HStack(spacing: 16) {
-            Button {
-                showSummary = true
-            } label: {
-                Label("Summary", systemImage: "chart.bar.fill")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.indigo))
-            }
-
-            if viewModel.answerState != .unanswered {
-                Button {
-                    viewModel.nextProblem()
-                } label: {
-                    Label("Next", systemImage: "arrow.right.circle.fill")
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.orange))
-                }
-                .transition(.move(edge: .trailing).combined(with: .opacity))
-                .animation(.spring(duration: 0.3), value: viewModel.answerState)
-            }
-        }
+        .buttonStyle(.plain)
     }
 }
