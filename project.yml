@@ -19,9 +19,12 @@ targets:
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1,2"
         INFOPLIST_FILE: MathMonsters/Info.plist
-        CODE_SIGNING_ALLOWED: NO
-        CODE_SIGNING_REQUIRED: NO
-        CODE_SIGN_IDENTITY: ""
+        DEVELOPMENT_TEAM: A62XZ22TL6
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "iPhone Developer"
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        "CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]": NO
+        "CODE_SIGNING_REQUIRED[sdk=iphonesimulator*]": NO
     info:
       path: MathMonsters/Info.plist
       properties:
