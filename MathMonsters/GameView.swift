@@ -45,7 +45,7 @@ struct PracticeView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 HStack(spacing: 6) {
-                    Text(grade.emoji)
+                    GradeMonsterBadge(grade: grade, size: 24)
                     Text("\(grade.displayName)  ·  \(operation.symbol)")
                         .font(.headline)
                 }
@@ -55,6 +55,7 @@ struct PracticeView: View {
         .onChange(of: viewModel.sessionComplete) { completed in
             guard completed else { return }
             router.navigate(to: .summary(
+                grade: grade,
                 correct: viewModel.correctCount,
                 incorrect: viewModel.incorrectCount
             ))
@@ -202,32 +203,48 @@ struct PracticeView: View {
     private var feedbackSection: some View {
         switch viewModel.answerState {
         case .unanswered:
-            Color.clear.frame(height: 72)
+            Color.clear.frame(height: 88)
         case .retry:
             feedbackBanner(
-                emoji: "🔁",
+                mood: .determined,
                 text: "Try one more time!",
                 color: .orange
             )
         case .correct:
-            feedbackBanner(emoji: "🎉", text: "Correct!", color: .green)
+            feedbackBanner(mood: .excited, text: correctFeedbackText, color: .green)
         case .incorrect:
             feedbackBanner(
-                emoji: "😬",
+                mood: .calm,
                 text: "Not quite — the answer is \(viewModel.currentProblem.correctAnswer)",
                 color: .red
             )
         }
     }
 
-    private func feedbackBanner(emoji: String, text: String, color: Color) -> some View {
+    private func feedbackBanner(mood: GradeMonsterMood, text: String, color: Color) -> some View {
         HStack(spacing: 10) {
-            Text(emoji).font(.system(size: 32))
-            Text(text)
-                .font(.subheadline.bold())
-                .foregroundStyle(color)
+            ZStack {
+                if mood == .excited {
+                    CorrectAnswerSparkleBurst(color: color)
+                }
+
+                GradeMonsterBadge(grade: grade, size: 48, mood: mood, showsIdleMotion: true)
+            }
+            .frame(width: 86, height: 86)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(feedbackTitle(for: mood))
+                    .font(.caption.bold())
+                    .foregroundStyle(color)
+
+                Text(text)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(color)
+            }
+
+            Spacer(minLength: 0)
         }
-        .frame(height: 72)
+        .frame(minHeight: 88)
         .padding(.horizontal, 16)
         .frame(maxWidth: .infinity)
         .background(color.opacity(0.1))
@@ -236,11 +253,81 @@ struct PracticeView: View {
         .animation(.spring(duration: 0.3), value: viewModel.answerState)
     }
 
+    private func feedbackTitle(for mood: GradeMonsterMood) -> String {
+        switch mood {
+        case .calm:
+            return "Keep Going"
+        case .excited:
+            return viewModel.consecutiveCorrectCount >= 3 ? "Streak Power" : "Monster Cheer"
+        case .proud:
+            return "Nice Work"
+        case .determined:
+            return "One More Try"
+        }
+    }
+
+    private var correctFeedbackText: String {
+        if viewModel.consecutiveCorrectCount >= 3 {
+            return grade.streakCatchphrase(for: viewModel.consecutiveCorrectCount)
+        }
+
+        return "Correct!"
+    }
+
+    private struct CorrectAnswerSparkleBurst: View {
+        let color: Color
+
+        var body: some View {
+            TimelineView(.animation(minimumInterval: 1.0 / 24.0)) { timeline in
+                let time = timeline.date.timeIntervalSinceReferenceDate
+                let pulse = 0.5 + 0.5 * sin(time * 5.4)
+                let orbit = sin(time * 2.6)
+
+                ZStack {
+                    Circle()
+                        .fill(RadialGradient(colors: [color.opacity(0.32), .clear], center: .center, startRadius: 4, endRadius: 30))
+                        .frame(width: 72, height: 72)
+                        .scaleEffect(0.88 + pulse * 0.2)
+
+                    sparkle(x: -30 + orbit * 4, y: -26, size: 17, angle: -22, color: .yellow, pulse: pulse)
+                    sparkle(x: 31, y: -25 - orbit * 3, size: 15, angle: 18, color: .white, pulse: 1 - pulse * 0.2)
+                    sparkle(x: -28, y: 28 + orbit * 2, size: 13, angle: 10, color: color.opacity(0.9), pulse: 1 - pulse * 0.18)
+                    sparkle(x: 30 - orbit * 3, y: 25, size: 16, angle: -14, color: .mint, pulse: pulse * 0.9)
+                    sparkle(x: 0, y: -38, size: 12, angle: 0, color: .orange, pulse: 1 - pulse * 0.3)
+
+                    confetti(x: -36, y: 4, color: .pink, rotation: pulse * 20)
+                    confetti(x: 37, y: 2, color: .cyan, rotation: -pulse * 18)
+                    confetti(x: -6, y: 35, color: .purple, rotation: pulse * 24)
+                }
+            }
+        }
+
+        private func sparkle(x: CGFloat, y: CGFloat, size: CGFloat, angle: Double, color: Color, pulse: Double) -> some View {
+            Image(systemName: "sparkle")
+                .font(.system(size: size, weight: .bold))
+                .foregroundStyle(color)
+                .rotationEffect(.degrees(angle + pulse * 10))
+                .scaleEffect(0.82 + pulse * 0.28)
+                .opacity(0.45 + pulse * 0.55)
+                .offset(x: x, y: y)
+        }
+
+            private func confetti(x: CGFloat, y: CGFloat, color: Color, rotation: Double) -> some View {
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(color)
+                .frame(width: 8, height: 14)
+                .rotationEffect(.degrees(rotation))
+                .offset(x: x, y: y)
+                .opacity(0.8)
+            }
+    }
+
     // MARK: - End Session
 
     private var endSessionButton: some View {
         Button {
             router.navigate(to: .summary(
+                grade: grade,
                 correct:   viewModel.correctCount,
                 incorrect: viewModel.incorrectCount
             ))

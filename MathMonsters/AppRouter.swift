@@ -6,7 +6,7 @@ enum Route: Hashable {
     case operationSelector(GradeLevel)
     case problemCountSelector(GradeLevel, MathOperation)
     case practice(GradeLevel, MathOperation, Int)
-    case summary(correct: Int, incorrect: Int)
+    case summary(grade: GradeLevel, correct: Int, incorrect: Int)
 }
 
 // MARK: - AppRouter

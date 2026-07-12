@@ -8,7 +8,6 @@ struct OperationSelectorView: View {
         ScrollView {
             VStack(spacing: 14) {
                 gradeHeader
-                instructionText
                 operationList
             }
             .padding(.horizontal, 16)
@@ -22,40 +21,40 @@ struct OperationSelectorView: View {
     // MARK: - Grade Header
 
     private var gradeHeader: some View {
-        HStack(spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(grade.color.gradient)
-                    .frame(width: 36, height: 36)
-                Text(grade.emoji)
-                    .font(.system(size: 17))
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                GradeMonsterBadge(grade: grade, size: 40, mood: .proud)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(grade.displayName)
+                        .font(.subheadline.bold())
+                    Text(grade.monsterLabel)
+                        .font(.caption.bold())
+                        .foregroundStyle(grade.color)
+                    Text(grade.operationSummary)
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
             }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(grade.displayName)
-                    .font(.subheadline.bold())
-                Text(grade.skillDescription)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(1)
-                    .lineLimit(2)
-            }
-            Spacer()
+
+            Text(grade.monsterCatchphrase)
+                .font(.caption.bold())
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(grade.color.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .padding(10)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    private var instructionText: some View {
-        Text("Choose an operation to practice")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-    }
-
     // MARK: - Operation List
 
     private var operationList: some View {
-        VStack(spacing: 10) {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
             ForEach(grade.availableOperations) { operation in
                 operationRow(operation)
             }
@@ -66,38 +65,58 @@ struct OperationSelectorView: View {
         Button {
             router.navigate(to: .problemCountSelector(grade, operation))
         } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(operation.color.opacity(0.18))
-                        .frame(width: 44, height: 44)
-                    Text(operation.emoji)
-                        .font(.system(size: 22))
-                }
+            operationRowContent(operation, isPressed: false)
+        }
+        .buttonStyle(InteractiveMonsterCardStyle { configuration in
+            operationRowContent(operation, isPressed: configuration.isPressed)
+        })
+    }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(operation.rawValue)
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
-                    Text("Symbol: \(operation.symbol)")
+    private func operationRowContent(_ operation: MathOperation, isPressed: Bool) -> some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                GradeMonsterBadge(grade: grade, size: 24, mood: isPressed ? .excited : .calm)
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(grade.monsterName)
+                        .font(.caption.bold())
+                        .foregroundStyle(grade.color)
+                    Text(grade.monsterFamily)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
 
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
             }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.secondary.opacity(0.12), lineWidth: 1)
-            )
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(operation.color.opacity(isPressed ? 0.28 : 0.18))
+                    .frame(width: 88, height: 88)
+                Text(operation.emoji)
+                    .font(.system(size: 42))
+            }
+
+            Text(operation.rawValue)
+                .font(.subheadline.bold())
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.center)
+
+            Text(isPressed ? operation.cheerLine : grade.operationCatchphrase(for: operation))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity, minHeight: 150)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(operation.color.opacity(isPressed ? 0.4 : 0.12), lineWidth: isPressed ? 1.5 : 1)
+        )
     }
 }

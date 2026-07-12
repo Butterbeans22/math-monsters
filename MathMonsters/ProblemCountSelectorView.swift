@@ -30,11 +30,7 @@ struct ProblemCountSelectorView: View {
 
     private var headerCard: some View {
         HStack(spacing: 12) {
-            Text(grade.emoji)
-                .font(.system(size: 28))
-                .frame(width: 44, height: 44)
-                .background(grade.color.opacity(0.15))
-                .clipShape(Circle())
+            GradeMonsterBadge(grade: grade, size: 44)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("\(grade.displayName) · \(operation.rawValue)")

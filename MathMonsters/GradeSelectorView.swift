@@ -7,7 +7,6 @@ struct GradeSelectorView: View {
         ScrollView {
             VStack(spacing: 14) {
                 headerView
-                instructionText
                 gradeList
             }
             .padding(.horizontal, 16)
@@ -31,12 +30,6 @@ struct GradeSelectorView: View {
         }
     }
 
-    private var instructionText: some View {
-        Text("Choose your grade level to get started")
-            .font(.caption)
-            .foregroundStyle(.secondary)
-    }
-
     // MARK: - Grade List
 
     private var gradeList: some View {
@@ -51,39 +44,66 @@ struct GradeSelectorView: View {
         Button {
             router.navigate(to: .operationSelector(grade))
         } label: {
-            HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(grade.color.opacity(0.18))
-                        .frame(width: 44, height: 44)
-                    Text(grade.emoji)
-                        .font(.system(size: 22))
-                }
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(grade.displayName)
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
-                    Text(grade.skillDescription.replacingOccurrences(of: "\n", with: " • "))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                }
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .foregroundStyle(.secondary)
-            }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.secondary.opacity(0.12), lineWidth: 1)
-            )
+            gradeRowContent(grade, isPressed: false)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(InteractiveMonsterCardStyle { configuration in
+            gradeRowContent(grade, isPressed: configuration.isPressed)
+        })
+    }
+
+    private func gradeRowContent(_ grade: GradeLevel, isPressed: Bool) -> some View {
+        HStack(spacing: 12) {
+            GradeMonsterBadge(grade: grade, size: 52, mood: isPressed ? .excited : .calm)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(grade.displayName)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                Text(grade.monsterLabel)
+                    .font(.caption)
+                    .foregroundStyle(grade.color)
+                Text(isPressed ? grade.pressedCatchphrase : grade.monsterCatchphrase)
+                    .font(.caption2.bold())
+                    .foregroundStyle(.primary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(grade.color.opacity(isPressed ? 0.22 : 0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                HStack(spacing: 6) {
+                    ForEach(grade.availableOperations) { operation in
+                        Text(operation.symbol)
+                            .font(.caption.bold())
+                            .foregroundStyle(operation.color)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(operation.color.opacity(0.14))
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(grade.color.opacity(isPressed ? 0.35 : 0.12), lineWidth: isPressed ? 1.5 : 1)
+        )
+    }
+}
+
+struct InteractiveMonsterCardStyle<Content: View>: ButtonStyle {
+    let content: (Configuration) -> Content
+
+    func makeBody(configuration: Configuration) -> some View {
+        content(configuration)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .animation(.spring(response: 0.22, dampingFraction: 0.72), value: configuration.isPressed)
     }
 }

@@ -36,6 +36,15 @@ enum MathOperation: String, CaseIterable, Identifiable, Hashable {
         case .division:       return .purple
         }
     }
+
+    var cheerLine: String {
+        switch self {
+        case .addition:       return "Let's build bigger numbers!"
+        case .subtraction:    return "Let's solve the sneaky take-aways!"
+        case .multiplication: return "Let's power up with fast groups!"
+        case .division:       return "Let's split it up like math bosses!"
+        }
+    }
 }
 
 // MARK: - GradeLevel
@@ -45,6 +54,118 @@ enum GradeLevel: Int, CaseIterable, Identifiable, Hashable {
 
     var id: Int { rawValue }
     var displayName: String { "Grade \(rawValue)" }
+
+    var monsterName: String {
+        switch self {
+        case .grade1: return "Bloop"
+        case .grade2: return "Miso"
+        case .grade3: return "Wob"
+        case .grade4: return "Spike"
+        case .grade5: return "Inky"
+        }
+    }
+
+    var monsterFamily: String {
+        switch self {
+        case .grade1: return "Fuzzball"
+        case .grade2: return "Cat Monster"
+        case .grade3: return "Cyclops"
+        case .grade4: return "Spike Beast"
+        case .grade5: return "Tentacle Boss"
+        }
+    }
+
+    var monsterLabel: String {
+        "\(monsterName) the \(monsterFamily)"
+    }
+
+    var monsterStyleLine: String {
+        switch self {
+        case .grade1: return "Soft, bouncy, and loves number games"
+        case .grade2: return "Quick paws and sneaky subtraction skills"
+        case .grade3: return "Big eye, big focus, all-operation pro"
+        case .grade4: return "Spiky energy with fast fact power"
+        case .grade5: return "Wiggly mastermind for the trickiest math"
+        }
+    }
+
+    var monsterCatchphrase: String {
+        switch self {
+        case .grade1: return "Hi! Let's bounce through + and -!"
+        case .grade2: return "Psst... I can spot sneaky number tricks!"
+        case .grade3: return "One big eye, four big math moves!"
+        case .grade4: return "Zap! Let's crunch facts super fast!"
+        case .grade5: return "Wiggle wiggle... bring me the hard ones!"
+        }
+    }
+
+    func streakCatchphrase(for streak: Int) -> String {
+        switch streak {
+        case 3:
+            return "Three in a row! You're on a roll!"
+        case 4:
+            return "Four straight! My monster brain is cheering!"
+        case 5...:
+            return "Mega streak! You're unstoppable!"
+        default:
+            return monsterCatchphrase
+        }
+    }
+
+    func summaryCatchphrase(score: Double) -> String {
+        switch score {
+        case 90...100:
+            return "Roar! You crushed this whole round!"
+        case 70..<90:
+            return "Yes! That was a strong monster round!"
+        case 50..<70:
+            return "Nice work. Let's level up the next round!"
+        default:
+            return "No worries. Monsters grow with practice too!"
+        }
+    }
+
+    var perfectRoundCatchphrase: String {
+        switch self {
+        case .grade1: return "Boing! Perfect round! You made every number sparkle!"
+        case .grade2: return "Purr-fect! You caught every sneaky answer!"
+        case .grade3: return "All-seeing victory! You nailed every problem!"
+        case .grade4: return "Zap-zing! That's a flawless monster round!"
+        case .grade5: return "Tentacle triumph! Absolute math mastery!"
+        }
+    }
+
+    var pressedCatchphrase: String {
+        switch self {
+        case .grade1: return "Boing! Tap me and let's start!"
+        case .grade2: return "Pounce! Pick me for a math mission!"
+        case .grade3: return "Zoom in! I'm ready for every sign!"
+        case .grade4: return "Crackle! Let's race through facts!"
+        case .grade5: return "Swish! Bring on the brainy challenge!"
+        }
+    }
+
+    func operationCatchphrase(for operation: MathOperation) -> String {
+        switch (self, operation) {
+        case (.grade1, .addition): return "Tiny hops make bigger totals!"
+        case (.grade1, .subtraction): return "Pop! One goes away!"
+        case (.grade2, .addition): return "Quick paws count up fast!"
+        case (.grade2, .subtraction): return "I can sniff out what's left!"
+        case (.grade3, .addition): return "My big eye spots every sum!"
+        case (.grade3, .subtraction): return "Watch me track the difference!"
+        case (.grade3, .multiplication): return "Groups, groups, groups... easy!"
+        case (.grade3, .division): return "Split it neatly and keep going!"
+        case (.grade4, .addition): return "Lightning sums coming through!"
+        case (.grade4, .subtraction): return "Let's shave numbers down fast!"
+        case (.grade4, .multiplication): return "Spike power loves fact families!"
+        case (.grade4, .division): return "Let's divide like champions!"
+        case (.grade5, .addition): return "Big numbers? Delicious."
+        case (.grade5, .subtraction): return "I untangle giant numbers!"
+        case (.grade5, .multiplication): return "Tentacles ready for mega groups!"
+        case (.grade5, .division): return "Tricky sharing is my favorite!"
+        default: return operation.cheerLine
+        }
+    }
 
     var emoji: String {
         switch self {
@@ -84,6 +205,10 @@ enum GradeLevel: Int, CaseIterable, Identifiable, Hashable {
         case .grade3, .grade4, .grade5:
             return MathOperation.allCases
         }
+    }
+
+    var operationSummary: String {
+        availableOperations.map(\ .symbol).joined(separator: "  ")
     }
 }
 
@@ -192,6 +317,7 @@ final class GameViewModel: ObservableObject {
     @Published var answerText: String = ""
     @Published var correctCount: Int = 0
     @Published var incorrectCount: Int = 0
+    @Published var consecutiveCorrectCount: Int = 0
     @Published var retriesRemaining: Int = 1
     @Published var answerState: AnswerState = .unanswered
     @Published var sessionComplete: Bool = false
@@ -212,14 +338,17 @@ final class GameViewModel: ObservableObject {
         guard let userAnswer = Int(answerText.trimmingCharacters(in: .whitespaces)) else { return }
         if userAnswer == currentProblem.correctAnswer {
             correctCount += 1
+            consecutiveCorrectCount += 1
             answerState  = .correct
             updateSessionCompletion()
         } else if retriesRemaining > 0 {
             retriesRemaining -= 1
+            consecutiveCorrectCount = 0
             answerState = .retry
             answerText = ""
         } else {
             incorrectCount += 1
+            consecutiveCorrectCount = 0
             answerState    = .incorrect
             updateSessionCompletion()
         }

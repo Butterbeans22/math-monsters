@@ -14,8 +14,8 @@ struct ContentView: View {
                         ProblemCountSelectorView(grade: grade, operation: operation)
                     case .practice(let grade, let operation, let count):
                         PracticeView(grade: grade, operation: operation, problemCount: count)
-                    case .summary(let correct, let incorrect):
-                        SummaryView(correctCount: correct, incorrectCount: incorrect)
+                    case .summary(let grade, let correct, let incorrect):
+                        SummaryView(grade: grade, correctCount: correct, incorrectCount: incorrect)
                     }
                 }
         }
