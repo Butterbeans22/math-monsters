@@ -5,6 +5,7 @@ import SwiftUI
 struct PracticeView: View {
     let grade: GradeLevel
     let operation: MathOperation
+    let problemCount: Int
 
     @StateObject private var viewModel: GameViewModel
     @EnvironmentObject private var router: AppRouter
@@ -14,10 +15,11 @@ struct PracticeView: View {
         viewModel.answerState == .correct || viewModel.answerState == .incorrect
     }
 
-    init(grade: GradeLevel, operation: MathOperation) {
+    init(grade: GradeLevel, operation: MathOperation, problemCount: Int) {
         self.grade     = grade
         self.operation = operation
-        _viewModel     = StateObject(wrappedValue: GameViewModel(grade: grade, operation: operation))
+        self.problemCount = problemCount
+        _viewModel     = StateObject(wrappedValue: GameViewModel(grade: grade, operation: operation, problemCount: problemCount))
     }
 
     var body: some View {
@@ -26,6 +28,7 @@ struct PracticeView: View {
 
             VStack(spacing: 0) {
                 scoreBar
+                progressBar
                 Spacer()
                 problemSection
                 Spacer()
@@ -49,6 +52,13 @@ struct PracticeView: View {
             }
         }
         .onTapGesture { answerFocused = false }
+        .onChange(of: viewModel.sessionComplete) { completed in
+            guard completed else { return }
+            router.navigate(to: .summary(
+                correct: viewModel.correctCount,
+                incorrect: viewModel.incorrectCount
+            ))
+        }
     }
 
     // MARK: - Score Bar
@@ -60,6 +70,13 @@ struct PracticeView: View {
             scorePill(count: viewModel.incorrectCount, label: "Incorrect", color: .red,    icon: "xmark.circle.fill")
         }
         .padding(.top, 16)
+    }
+
+    private var progressBar: some View {
+        Text("Problem \(min(viewModel.completedProblems + 1, problemCount)) of \(problemCount)")
+            .font(.caption.bold())
+            .foregroundStyle(.secondary)
+            .padding(.top, 8)
     }
 
     private func scorePill(count: Int, label: String, color: Color, icon: String) -> some View {

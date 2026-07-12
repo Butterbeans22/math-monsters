@@ -4,7 +4,8 @@ import SwiftUI
 
 enum Route: Hashable {
     case operationSelector(GradeLevel)
-    case practice(GradeLevel, MathOperation)
+    case problemCountSelector(GradeLevel, MathOperation)
+    case practice(GradeLevel, MathOperation, Int)
     case summary(correct: Int, incorrect: Int)
 }
 

@@ -185,6 +185,7 @@ struct MathProblem {
 final class GameViewModel: ObservableObject {
     let grade: GradeLevel
     let operation: MathOperation
+    let problemCount: Int
     private let maxRetriesPerProblem = 1
 
     @Published var currentProblem: MathProblem
@@ -193,12 +194,17 @@ final class GameViewModel: ObservableObject {
     @Published var incorrectCount: Int = 0
     @Published var retriesRemaining: Int = 1
     @Published var answerState: AnswerState = .unanswered
+    @Published var sessionComplete: Bool = false
+
+    var completedProblems: Int { correctCount + incorrectCount }
+    var remainingProblems: Int { max(0, problemCount - completedProblems) }
 
     enum AnswerState { case unanswered, retry, correct, incorrect }
 
-    init(grade: GradeLevel, operation: MathOperation) {
+    init(grade: GradeLevel, operation: MathOperation, problemCount: Int) {
         self.grade     = grade
         self.operation = operation
+        self.problemCount = max(1, problemCount)
         self.currentProblem = MathProblem.generate(grade: grade, operation: operation)
     }
 
@@ -207,6 +213,7 @@ final class GameViewModel: ObservableObject {
         if userAnswer == currentProblem.correctAnswer {
             correctCount += 1
             answerState  = .correct
+            updateSessionCompletion()
         } else if retriesRemaining > 0 {
             retriesRemaining -= 1
             answerState = .retry
@@ -214,13 +221,21 @@ final class GameViewModel: ObservableObject {
         } else {
             incorrectCount += 1
             answerState    = .incorrect
+            updateSessionCompletion()
         }
     }
 
     func nextProblem() {
+        guard !sessionComplete else { return }
         currentProblem = MathProblem.generate(grade: grade, operation: operation)
         answerText     = ""
         retriesRemaining = maxRetriesPerProblem
         answerState    = .unanswered
+    }
+
+    private func updateSessionCompletion() {
+        if completedProblems >= problemCount {
+            sessionComplete = true
+        }
     }
 }

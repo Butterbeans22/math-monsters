@@ -13,6 +13,7 @@
 		2BE75BFA2558BA7489EF1905 /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E89E17D954B6AD0D05F9078F /* GameViewModel.swift */; };
 		5B78B43E5FBAAF2F80D0BF97 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70B2CB0343089642D02E03F7 /* GameView.swift */; };
 		940E2BB9DDA6294F4349CEBA /* OperationSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BF4AF7B432DA0164B0DA65F /* OperationSelectorView.swift */; };
+		C2DDC36084D823BAD7A529B6 /* ProblemCountSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1528F0F31FAA31F680B98567 /* ProblemCountSelectorView.swift */; };
 		D149AB983E0F30AB371D2174 /* AppRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB7EC884D699585B9E8AD585 /* AppRouter.swift */; };
 		E5EE5FB142E6EDF8A55361E9 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C7BB50760668E10591E209 /* SummaryView.swift */; };
 		F3B79B472F07C5E81F334F6E /* GradeSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7DE4155F07998AE3D92CFE3 /* GradeSelectorView.swift */; };
@@ -20,6 +21,7 @@
 
 /* Begin PBXFileReference section */
 		0A66AFC3DE8D4EA28BC33CE0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		1528F0F31FAA31F680B98567 /* ProblemCountSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProblemCountSelectorView.swift; sourceTree = "<group>"; };
 		44C9FB8498586C54C999F540 /* MathMonstersApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathMonstersApp.swift; sourceTree = "<group>"; };
 		60C7BB50760668E10591E209 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		70B2CB0343089642D02E03F7 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
@@ -61,6 +63,7 @@
 				E2A2F9407CCA5CEF69DBAFF5 /* Info.plist */,
 				44C9FB8498586C54C999F540 /* MathMonstersApp.swift */,
 				7BF4AF7B432DA0164B0DA65F /* OperationSelectorView.swift */,
+				1528F0F31FAA31F680B98567 /* ProblemCountSelectorView.swift */,
 				60C7BB50760668E10591E209 /* SummaryView.swift */,
 			);
 			path = MathMonsters;
@@ -140,6 +143,7 @@
 				F3B79B472F07C5E81F334F6E /* GradeSelectorView.swift in Sources */,
 				077E33C9451633762445400B /* MathMonstersApp.swift in Sources */,
 				940E2BB9DDA6294F4349CEBA /* OperationSelectorView.swift in Sources */,
+				C2DDC36084D823BAD7A529B6 /* ProblemCountSelectorView.swift in Sources */,
 				E5EE5FB142E6EDF8A55361E9 /* SummaryView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
