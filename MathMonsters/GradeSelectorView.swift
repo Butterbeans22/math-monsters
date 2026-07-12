@@ -2,36 +2,26 @@ import SwiftUI
 
 struct GradeSelectorView: View {
     @EnvironmentObject private var router: AppRouter
-
-    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
-    private let gridSpacing: CGFloat = 10
+    private let tileSpacing: CGFloat = 6
 
     var body: some View {
         GeometryReader { proxy in
             let isCompact = proxy.size.height < 760
             let isUltraCompact = proxy.size.height < 690
-            let stackSpacing: CGFloat = isUltraCompact ? 8 : 12
+            let stackSpacing: CGFloat = isUltraCompact ? 6 : 10
             let horizontalPadding: CGFloat = isUltraCompact ? 10 : 14
             let topPadding: CGFloat = isUltraCompact ? 4 : 8
             let bottomPadding: CGFloat = isUltraCompact ? 6 : 10
-            let showInstruction = !isUltraCompact
-
-            let cardHeight = equalCardHeight(
-                for: proxy,
-                isCompact: isCompact,
-                isUltraCompact: isUltraCompact,
-                stackSpacing: stackSpacing,
-                topPadding: topPadding,
-                bottomPadding: bottomPadding,
-                showInstruction: showInstruction
-            )
+            let showInstruction = proxy.size.height >= 680
+            let tileSize = gradeTileSize(for: proxy.size.width, horizontalPadding: horizontalPadding)
 
             VStack(spacing: stackSpacing) {
                 headerView(isCompact: isCompact, isUltraCompact: isUltraCompact)
                 if showInstruction {
                     instructionText(isCompact: isCompact)
                 }
-                gradeGrid(cardHeight: cardHeight, isCompact: isCompact)
+                gradeRow(tileSize: tileSize, isCompact: isCompact)
+                Spacer(minLength: 0)
             }
             .padding(.horizontal, horizontalPadding)
             .padding(.top, topPadding)
@@ -49,9 +39,9 @@ struct GradeSelectorView: View {
     private func headerView(isCompact: Bool, isUltraCompact: Bool) -> some View {
         VStack(spacing: isUltraCompact ? 2 : 4) {
             Text("🧮 👾 🧮")
-                .font(.system(size: isUltraCompact ? 28 : (isCompact ? 30 : 34)))
+                .font(.system(size: isUltraCompact ? 22 : (isCompact ? 24 : 28)))
             Text("Let's Practice Math!")
-                .font((isCompact ? Font.subheadline : Font.headline).bold())
+                .font((isCompact ? Font.caption : Font.subheadline).bold())
                 .foregroundStyle(.primary)
         }
     }
@@ -62,81 +52,46 @@ struct GradeSelectorView: View {
             .foregroundStyle(.secondary)
     }
 
-    // MARK: - Grade Grid
+    // MARK: - Grade Row
 
-    private func gradeGrid(cardHeight: CGFloat, isCompact: Bool) -> some View {
-        LazyVGrid(columns: columns, spacing: gridSpacing) {
+    private func gradeRow(tileSize: CGFloat, isCompact: Bool) -> some View {
+        HStack(spacing: tileSpacing) {
             ForEach(GradeLevel.allCases) { grade in
-                gradeCard(grade, cardHeight: cardHeight, isCompact: isCompact)
+                gradeTile(grade, tileSize: tileSize, isCompact: isCompact)
             }
         }
     }
 
-    private func gradeCard(_ grade: GradeLevel, cardHeight: CGFloat, isCompact: Bool) -> some View {
+    private func gradeTile(_ grade: GradeLevel, tileSize: CGFloat, isCompact: Bool) -> some View {
         Button {
             router.navigate(to: .operationSelector(grade))
         } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(grade.emoji)
-                        .font(.system(size: isCompact ? 22 : 26))
-                    Spacer()
-                    Image(systemName: "chevron.right.circle.fill")
-                        .font(.system(size: isCompact ? 14 : 16, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.7))
-                }
+            VStack(spacing: 2) {
+                Text(grade.emoji)
+                    .font(.system(size: isCompact ? 18 : 20))
 
-                Text(grade.displayName)
-                    .font((isCompact ? Font.subheadline : Font.headline).bold())
+                Text("G\(grade.rawValue)")
+                    .font(.system(size: isCompact ? 10 : 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
-
-                Text(grade.skillDescription)
-                    .font(.caption2)
-                    .foregroundStyle(.white.opacity(0.85))
-                    .multilineTextAlignment(.leading)
-                    .lineSpacing(1)
-                    .lineLimit(2)
             }
-            .padding(isCompact ? 9 : 12)
-            .frame(minHeight: cardHeight, maxHeight: cardHeight)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(width: tileSize, height: tileSize)
             .background(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(grade.color.gradient)
             )
-            .shadow(color: grade.color.opacity(0.2), radius: 4, x: 0, y: 2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
+            )
+            .shadow(color: grade.color.opacity(0.18), radius: 3, x: 0, y: 2)
         }
         .buttonStyle(.plain)
     }
 
-    private func equalCardHeight(
-        for proxy: GeometryProxy,
-        isCompact: Bool,
-        isUltraCompact: Bool,
-        stackSpacing: CGFloat,
-        topPadding: CGFloat,
-        bottomPadding: CGFloat,
-        showInstruction: Bool
-    ) -> CGFloat {
-        let rows = Int(ceil(Double(GradeLevel.allCases.count) / 2.0))
-        let safeAdjustedHeight = proxy.size.height - proxy.safeAreaInsets.top - proxy.safeAreaInsets.bottom
-
-        // Conservative fixed-height estimates so cards always fit without clipping.
-        let headerHeight: CGFloat = isUltraCompact ? 46 : (isCompact ? 52 : 58)
-        let instructionHeight: CGFloat = showInstruction ? (isCompact ? 12 : 14) : 0
-
-        let stackGapCount: CGFloat = showInstruction ? 2 : 1
-        let rowGaps = CGFloat(max(rows - 1, 0))
-
-        let remaining = safeAdjustedHeight
-            - topPadding
-            - bottomPadding
-            - headerHeight
-            - instructionHeight
-            - (stackGapCount * stackSpacing)
-            - (rowGaps * gridSpacing)
-
-        let calculated = floor(remaining / CGFloat(rows))
-        return max(84, calculated)
+    private func gradeTileSize(for width: CGFloat, horizontalPadding: CGFloat) -> CGFloat {
+        let count = CGFloat(GradeLevel.allCases.count)
+        let available = width - (horizontalPadding * 2) - (tileSpacing * (count - 1))
+        let calculated = floor(available / count)
+        return max(48, min(68, calculated))
     }
 }
